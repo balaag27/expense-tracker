@@ -856,13 +856,104 @@
 </div>
 
 <!-- ════════════════════════════
-     SCREEN 4 — HOLIDAY TRACKER (placeholder)
+     SCREEN 4 — HOLIDAY TRACKER
 ════════════════════════════ -->
-<div id="holiday-screen" class="screen placeholder-screen">
-  <div class="badge">Phase 5 — Coming Next</div>
-  <h2>Holiday Tracker</h2>
-  <p>This screen will let you record holiday expenses with Trip Name and all travel-specific expense fields.</p>
-  <button class="btn-back" onclick="goTo('home-screen')">← Back to Home</button>
+<div id="holiday-screen" class="screen">
+  <div class="top-bar">
+    <div class="top-bar-label">Holiday Expenses</div>
+    <div class="top-bar-title">Holiday Tracker</div>
+    <div class="top-bar-sub">Record your travel spending</div>
+  </div>
+
+  <div class="screen-body">
+    <!-- Add Expense Form -->
+    <div class="section-label">New Holiday Expense</div>
+    
+    <div class="expense-form">
+      <!-- Trip Name - Special field for holidays -->
+      <div class="form-group">
+        <label class="form-label">Trip Name</label>
+        <div style="display:flex; gap:8px; align-items:flex-end;">
+          <select class="form-input" id="holiday-trip" style="flex:1">
+            <option value="">Select trip or add new...</option>
+          </select>
+          <button class="btn-sm" onclick="openAddTrip()" style="flex-shrink:0; padding:12px 16px;">+ New</button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Transaction Detail</label>
+        <input class="form-input" type="text" id="holiday-detail"
+               placeholder="e.g. Hotel check-in, Flight to Bangkok">
+      </div>
+
+      <div class="form-row">
+        <div class="form-group" style="flex:1">
+          <label class="form-label">Category</label>
+          <select class="form-input" id="holiday-category">
+            <option value="">Select...</option>
+            <option value="Transportation">Transportation</option>
+            <option value="Food & Beverage">Food & Beverage</option>
+            <option value="Accommodation">Accommodation</option>
+            <option value="Attraction">Attraction</option>
+            <option value="Shopping">Shopping</option>
+            <option value="Travel Insurance">Travel Insurance</option>
+            <option value="Others">Others</option>
+          </select>
+        </div>
+        <div class="form-group" style="flex:1">
+          <label class="form-label">Currency</label>
+          <select class="form-input" id="holiday-currency">
+            <option value="MYR">MYR</option>
+            <option value="USD">USD</option>
+            <option value="SGD">SGD</option>
+            <option value="THB">THB</option>
+            <option value="EUR">EUR</option>
+            <option value="GBP">GBP</option>
+            <option value="AUD">AUD</option>
+            <option value="JPY">JPY</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Amount</label>
+        <input class="form-input" type="number" id="holiday-amount"
+               placeholder="0.00" step="0.01" min="0">
+      </div>
+
+      <div class="form-row">
+        <div class="form-group" style="flex:1">
+          <label class="form-label">Debit Account</label>
+          <select class="form-input" id="holiday-debit">
+            <option value="">Select...</option>
+          </select>
+        </div>
+        <div class="form-group" style="flex:1">
+          <label class="form-label">Credit Account</label>
+          <select class="form-input" id="holiday-credit">
+            <option value="">Select...</option>
+          </select>
+        </div>
+      </div>
+
+      <button class="btn-primary" onclick="saveHolidayExpense()">Add Expense</button>
+      <div class="err-msg" id="err-holiday">Please fill in all required fields.</div>
+    </div>
+
+    <!-- Filter by trip -->
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-top:32px; margin-bottom:16px;">
+      <div class="section-label" style="margin:0">Your Holiday Expenses</div>
+      <select class="form-input" id="filter-trip" onchange="loadHolidayExpenses()"
+              style="width:auto; min-width:140px; padding:8px 12px; font-size:13px;">
+        <option value="">All trips</option>
+      </select>
+    </div>
+
+    <div id="holiday-list"></div>
+
+    <button class="btn-back" onclick="goTo('home-screen')">← Back to Home</button>
+  </div>
 </div>
 
 <!-- ════════════════════════════
@@ -993,6 +1084,24 @@
     <div class="modal-btns">
       <button class="btn-cancel"  onclick="closeModal('modal-add-account')">Cancel</button>
       <button class="btn-confirm" onclick="saveAccount()">Add Account</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add trip name -->
+<div class="overlay" id="modal-add-trip">
+  <div class="modal">
+    <div class="modal-title">Add Trip</div>
+    <p class="modal-hint">Create a name for this holiday or trip (e.g. "Bangkok May 2026", "Bali Family Trip")</p>
+    <div class="form-group">
+      <label class="form-label">Trip Name</label>
+      <input class="form-input" type="text" id="input-trip"
+             placeholder="e.g. Bangkok May 2026">
+    </div>
+    <div class="err-msg" id="err-add-trip">Please enter a trip name.</div>
+    <div class="modal-btns">
+      <button class="btn-cancel"  onclick="closeModal('modal-add-trip')">Cancel</button>
+      <button class="btn-confirm" onclick="saveTrip()">Add Trip</button>
     </div>
   </div>
 </div>
@@ -1497,7 +1606,350 @@ goTo = function(id) {
     cancelDailyEdit();
     loadDailyExpenses();
   }
+  if (id === 'holiday-screen') {
+    cancelHolidayEdit();
+    loadHolidayExpenses();
+  }
 };
+
+// ═══════════════════════════════════════════════════
+// HOLIDAY TRACKER FUNCTIONS
+// ═══════════════════════════════════════════════════
+
+// Populate account dropdowns for holiday
+function populateHolidayAccounts() {
+  const accounts = S.get('et_accounts') || [];
+  const debitEl  = document.getElementById('holiday-debit');
+  const creditEl = document.getElementById('holiday-credit');
+  
+  const options = accounts.map(a => `<option value="${a}">${a}</option>`).join('');
+  debitEl.innerHTML  = '<option value="">Select...</option>' + options;
+  creditEl.innerHTML = '<option value="">Select...</option>' + options;
+}
+
+// Populate trip dropdown
+function populateTrips() {
+  const session = S.get('et_session');
+  const trips   = S.get(`et_trips_${session}`) || [];
+  const tripEl  = document.getElementById('holiday-trip');
+  const filterEl = document.getElementById('filter-trip');
+  
+  const options = trips.map(t => `<option value="${t}">${t}</option>`).join('');
+  tripEl.innerHTML = '<option value="">Select trip or add new...</option>' + options;
+  
+  const currentFilter = filterEl.value;
+  filterEl.innerHTML = '<option value="">All trips</option>' + options;
+  filterEl.value = currentFilter; // Preserve filter selection
+}
+
+// Open add trip modal
+function openAddTrip() {
+  document.getElementById('input-trip').value = '';
+  document.getElementById('err-add-trip').classList.remove('show');
+  document.getElementById('modal-add-trip').classList.add('show');
+}
+
+// Save new trip
+function saveTrip() {
+  const name = document.getElementById('input-trip').value.trim();
+  const err  = document.getElementById('err-add-trip');
+  
+  if (!name) { 
+    err.textContent = 'Please enter a trip name.';
+    err.classList.add('show'); 
+    return; 
+  }
+  
+  const session = S.get('et_session');
+  const trips   = S.get(`et_trips_${session}`) || [];
+  
+  if (trips.includes(name)) {
+    err.textContent = 'This trip name already exists.';
+    err.classList.add('show');
+    return;
+  }
+  
+  trips.push(name);
+  S.set(`et_trips_${session}`, trips);
+  
+  closeModal('modal-add-trip');
+  populateTrips();
+  
+  // Auto-select the newly added trip
+  document.getElementById('holiday-trip').value = name;
+}
+
+// Load holiday expenses
+function loadHolidayExpenses() {
+  populateHolidayAccounts();
+  populateTrips();
+  
+  const session = S.get('et_session');
+  if (!session) return;
+  
+  let expenses = S.get(`et_holiday_${session}`) || [];
+  const listEl = document.getElementById('holiday-list');
+  
+  // Filter by trip if selected
+  const filterTrip = document.getElementById('filter-trip').value;
+  if (filterTrip) {
+    expenses = expenses.filter(e => e.trip === filterTrip);
+  }
+  
+  if (expenses.length === 0) {
+    const msg = filterTrip 
+      ? `No expenses for "${filterTrip}" yet.`
+      : 'No holiday expenses recorded yet.<br>Add your first expense above!';
+    
+    listEl.innerHTML = `
+      <div class="empty-state">
+        <svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5z"/>
+          <path d="M12 12h.01"/>
+          <path d="M8 12h.01"/>
+          <path d="M16 12h.01"/>
+        </svg>
+        <div class="empty-state-text">${msg}</div>
+      </div>`;
+    return;
+  }
+  
+  // Sort by date descending
+  expenses.sort((a,b) => new Date(b.date) - new Date(a.date));
+  
+  listEl.innerHTML = expenses.map((exp, idx) => {
+    // Need to find original index in full array for edit/delete
+    const allExpenses = S.get(`et_holiday_${session}`) || [];
+    const originalIdx = allExpenses.findIndex(e => 
+      e.date === exp.date && e.detail === exp.detail && e.amount === exp.amount
+    );
+    
+    const date = new Date(exp.date);
+    const dateStr = date.toLocaleDateString('en-MY', { 
+      day: 'numeric', month: 'short', year: 'numeric' 
+    });
+    
+    return `
+      <div class="expense-item">
+        <div class="expense-item-header">
+          <div>
+            <div class="expense-item-detail">${exp.detail}</div>
+            <span class="expense-item-category">${exp.category}</span>
+          </div>
+          <div class="expense-item-amount">
+            ${parseFloat(exp.amount).toFixed(2)}
+            <span class="expense-item-currency">${exp.currency}</span>
+          </div>
+        </div>
+        <div class="expense-item-meta">
+          <div class="expense-meta-item">
+            <span class="expense-meta-label">Trip:</span>
+            <span class="expense-meta-value">${exp.trip}</span>
+          </div>
+          <div class="expense-meta-item">
+            <span class="expense-meta-label">Date:</span>
+            <span class="expense-meta-value">${dateStr}</span>
+          </div>
+          <div class="expense-meta-item">
+            <span class="expense-meta-label">No:</span>
+            <span class="expense-meta-value">${exp.no}</span>
+          </div>
+          <div class="expense-meta-item">
+            <span class="expense-meta-label">Debit:</span>
+            <span class="expense-meta-value">${exp.debit || '—'}</span>
+          </div>
+          <div class="expense-meta-item">
+            <span class="expense-meta-label">Credit:</span>
+            <span class="expense-meta-value">${exp.credit || '—'}</span>
+          </div>
+        </div>
+        <div class="expense-actions">
+          <button class="btn-edit" onclick="editHolidayExpense(${originalIdx})">
+            <svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+            Edit
+          </button>
+          <button class="btn-delete" onclick="deleteHolidayExpense(${originalIdx})">
+            <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+            Delete
+          </button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// Save new holiday expense
+function saveHolidayExpense() {
+  const trip     = document.getElementById('holiday-trip').value;
+  const detail   = document.getElementById('holiday-detail').value.trim();
+  const category = document.getElementById('holiday-category').value;
+  const currency = document.getElementById('holiday-currency').value;
+  const amount   = document.getElementById('holiday-amount').value;
+  const debit    = document.getElementById('holiday-debit').value;
+  const credit   = document.getElementById('holiday-credit').value;
+  const errEl    = document.getElementById('err-holiday');
+  
+  // Validation
+  if (!trip) {
+    errEl.textContent = 'Please select or create a trip name.';
+    errEl.classList.add('show');
+    return;
+  }
+  
+  if (!detail || !category || !amount) {
+    errEl.textContent = 'Please fill in Transaction Detail, Category, and Amount.';
+    errEl.classList.add('show');
+    return;
+  }
+  
+  if (parseFloat(amount) <= 0) {
+    errEl.textContent = 'Amount must be greater than zero.';
+    errEl.classList.add('show');
+    return;
+  }
+  
+  errEl.classList.remove('show');
+  
+  const session  = S.get('et_session');
+  const expenses = S.get(`et_holiday_${session}`) || [];
+  
+  const now   = new Date();
+  const month = now.toLocaleDateString('en-MY', { month: 'short', year: 'numeric' });
+  
+  const newExpense = {
+    no: expenses.length + 1,
+    trip: trip,
+    date: now.toISOString(),
+    month: month,
+    detail: detail,
+    category: category,
+    currency: currency,
+    amount: parseFloat(amount).toFixed(2),
+    debit: debit,
+    credit: credit
+  };
+  
+  expenses.push(newExpense);
+  S.set(`et_holiday_${session}`, expenses);
+  
+  // Clear form
+  document.getElementById('holiday-trip').value     = '';
+  document.getElementById('holiday-detail').value   = '';
+  document.getElementById('holiday-category').value = '';
+  document.getElementById('holiday-amount').value   = '';
+  document.getElementById('holiday-debit').value    = '';
+  document.getElementById('holiday-credit').value   = '';
+  
+  // Reload list
+  loadHolidayExpenses();
+  
+  // Scroll to top
+  document.getElementById('holiday-screen').scrollTop = 0;
+}
+
+// Edit holiday expense
+let editingHolidayIndex = null;
+
+function editHolidayExpense(idx) {
+  const session  = S.get('et_session');
+  const expenses = S.get(`et_holiday_${session}`) || [];
+  const exp      = expenses[idx];
+  
+  if (!exp) return;
+  
+  // Populate form
+  document.getElementById('holiday-trip').value     = exp.trip;
+  document.getElementById('holiday-detail').value   = exp.detail;
+  document.getElementById('holiday-category').value = exp.category;
+  document.getElementById('holiday-currency').value = exp.currency;
+  document.getElementById('holiday-amount').value   = exp.amount;
+  document.getElementById('holiday-debit').value    = exp.debit || '';
+  document.getElementById('holiday-credit').value   = exp.credit || '';
+  
+  editingHolidayIndex = idx;
+  
+  // Change button
+  const btn = document.querySelector('#holiday-screen .btn-primary');
+  btn.textContent = 'Update Expense';
+  btn.onclick = updateHolidayExpense;
+  
+  // Scroll to top
+  document.getElementById('holiday-screen').scrollTop = 0;
+}
+
+function updateHolidayExpense() {
+  const trip     = document.getElementById('holiday-trip').value;
+  const detail   = document.getElementById('holiday-detail').value.trim();
+  const category = document.getElementById('holiday-category').value;
+  const currency = document.getElementById('holiday-currency').value;
+  const amount   = document.getElementById('holiday-amount').value;
+  const debit    = document.getElementById('holiday-debit').value;
+  const credit   = document.getElementById('holiday-credit').value;
+  const errEl    = document.getElementById('err-holiday');
+  
+  if (!trip || !detail || !category || !amount) {
+    errEl.textContent = 'Please fill in all required fields.';
+    errEl.classList.add('show');
+    return;
+  }
+  
+  if (parseFloat(amount) <= 0) {
+    errEl.textContent = 'Amount must be greater than zero.';
+    errEl.classList.add('show');
+    return;
+  }
+  
+  errEl.classList.remove('show');
+  
+  const session  = S.get('et_session');
+  const expenses = S.get(`et_holiday_${session}`) || [];
+  
+  if (editingHolidayIndex !== null && expenses[editingHolidayIndex]) {
+    expenses[editingHolidayIndex].trip     = trip;
+    expenses[editingHolidayIndex].detail   = detail;
+    expenses[editingHolidayIndex].category = category;
+    expenses[editingHolidayIndex].currency = currency;
+    expenses[editingHolidayIndex].amount   = parseFloat(amount).toFixed(2);
+    expenses[editingHolidayIndex].debit    = debit;
+    expenses[editingHolidayIndex].credit   = credit;
+    
+    S.set(`et_holiday_${session}`, expenses);
+  }
+  
+  cancelHolidayEdit();
+  loadHolidayExpenses();
+}
+
+function cancelHolidayEdit() {
+  editingHolidayIndex = null;
+  
+  document.getElementById('holiday-trip').value     = '';
+  document.getElementById('holiday-detail').value   = '';
+  document.getElementById('holiday-category').value = '';
+  document.getElementById('holiday-amount').value   = '';
+  document.getElementById('holiday-debit').value    = '';
+  document.getElementById('holiday-credit').value   = '';
+  
+  const btn = document.querySelector('#holiday-screen .btn-primary');
+  btn.textContent = 'Add Expense';
+  btn.onclick = saveHolidayExpense;
+}
+
+// Delete holiday expense
+function deleteHolidayExpense(idx) {
+  if (!confirm('Delete this expense? This cannot be undone.')) return;
+  
+  const session  = S.get('et_session');
+  const expenses = S.get(`et_holiday_${session}`) || [];
+  
+  expenses.splice(idx, 1);
+  
+  // Renumber
+  expenses.forEach((exp, i) => exp.no = i + 1);
+  
+  S.set(`et_holiday_${session}`, expenses);
+  loadHolidayExpenses();
+}
+
 
 </script>
 </body>
