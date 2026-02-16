@@ -372,6 +372,164 @@
     .btn-back:active { background: rgba(255,255,255,0.09); }
 
     /* ═══════════════════════════
+       EXPENSE FORM & LIST
+    ═══════════════════════════ */
+    .expense-form {
+      background: var(--bg-card);
+      border-radius: var(--r);
+      padding: 24px 20px;
+      border: 1px solid var(--border);
+      margin-bottom: 20px;
+    }
+
+    .form-row {
+      display: flex;
+      gap: 12px;
+    }
+
+    select.form-input {
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%2394a3b8' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 14px center;
+      padding-right: 40px;
+      cursor: pointer;
+    }
+
+    .expense-item {
+      background: var(--bg-card);
+      border-radius: var(--r-sm);
+      padding: 16px 18px;
+      border: 1px solid var(--border);
+      margin-bottom: 10px;
+      position: relative;
+    }
+
+    .expense-item-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 10px;
+    }
+
+    .expense-item-detail {
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--text);
+      margin-bottom: 3px;
+    }
+
+    .expense-item-category {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 9px;
+      border-radius: 6px;
+      background: rgba(245,158,11,0.12);
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .expense-item-amount {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--accent);
+      text-align: right;
+    }
+
+    .expense-item-currency {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-2);
+      margin-left: 2px;
+    }
+
+    .expense-item-meta {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      font-size: 12px;
+      color: var(--text-3);
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid rgba(255,255,255,0.04);
+    }
+
+    .expense-meta-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .expense-meta-label {
+      color: var(--text-3);
+    }
+
+    .expense-meta-value {
+      color: var(--text-2);
+      font-weight: 500;
+    }
+
+    .expense-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .btn-edit, .btn-delete {
+      flex: 1;
+      padding: 9px 12px;
+      font-size: 13px;
+      font-weight: 500;
+      border-radius: 8px;
+      border: none;
+      font-family: 'DM Sans', sans-serif;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .btn-edit {
+      background: rgba(255,255,255,0.05);
+      color: var(--text-2);
+      border: 1px solid rgba(255,255,255,0.07);
+    }
+
+    .btn-delete {
+      background: rgba(239,68,68,0.1);
+      color: #fca5a5;
+      border: 1px solid rgba(239,68,68,0.2);
+    }
+
+    .btn-edit svg, .btn-delete svg {
+      width: 14px;
+      height: 14px;
+      fill: currentColor;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 48px 24px;
+      color: var(--text-3);
+    }
+
+    .empty-state-icon {
+      width: 64px;
+      height: 64px;
+      margin: 0 auto 16px;
+      opacity: 0.3;
+    }
+
+    .empty-state-text {
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    /* ═══════════════════════════
        ADMIN SCREEN
     ═══════════════════════════ */
     .admin-card {
@@ -614,13 +772,87 @@
 </div>
 
 <!-- ════════════════════════════
-     SCREEN 3 — DAILY TRACKER (placeholder)
+     SCREEN 3 — DAILY TRACKER
 ════════════════════════════ -->
-<div id="daily-screen" class="screen placeholder-screen">
-  <div class="badge">Phase 4 — Coming Next</div>
-  <h2>Daily Tracker</h2>
-  <p>This screen will let you record daily expenses with all your fields — Transaction Detail, Category, Currency, Amount, Debit &amp; Credit Account.</p>
-  <button class="btn-back" onclick="goTo('home-screen')">← Back to Home</button>
+<div id="daily-screen" class="screen">
+  <div class="top-bar">
+    <div class="top-bar-label">Daily Expenses</div>
+    <div class="top-bar-title">Daily Tracker</div>
+    <div class="top-bar-sub">Record your daily spending</div>
+  </div>
+
+  <div class="screen-body">
+    <!-- Add Expense Form -->
+    <div class="section-label">New Expense</div>
+    
+    <div class="expense-form">
+      <div class="form-group">
+        <label class="form-label">Transaction Detail</label>
+        <input class="form-input" type="text" id="daily-detail"
+               placeholder="e.g. Grab to office, Groceries at AEON">
+      </div>
+
+      <div class="form-row">
+        <div class="form-group" style="flex:1">
+          <label class="form-label">Category</label>
+          <select class="form-input" id="daily-category">
+            <option value="">Select...</option>
+            <option value="Transportation">Transportation</option>
+            <option value="Grocery">Grocery</option>
+            <option value="Food & Beverage">Food & Beverage</option>
+            <option value="Shopping">Shopping</option>
+            <option value="Utilities">Utilities</option>
+            <option value="Healthcare">Healthcare</option>
+            <option value="Entertainment">Entertainment</option>
+            <option value="Others">Others</option>
+          </select>
+        </div>
+        <div class="form-group" style="flex:1">
+          <label class="form-label">Currency</label>
+          <select class="form-input" id="daily-currency">
+            <option value="MYR">MYR</option>
+            <option value="USD">USD</option>
+            <option value="SGD">SGD</option>
+            <option value="THB">THB</option>
+            <option value="EUR">EUR</option>
+            <option value="GBP">GBP</option>
+            <option value="AUD">AUD</option>
+            <option value="JPY">JPY</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Amount</label>
+        <input class="form-input" type="number" id="daily-amount"
+               placeholder="0.00" step="0.01" min="0">
+      </div>
+
+      <div class="form-row">
+        <div class="form-group" style="flex:1">
+          <label class="form-label">Debit Account</label>
+          <select class="form-input" id="daily-debit">
+            <option value="">Select...</option>
+          </select>
+        </div>
+        <div class="form-group" style="flex:1">
+          <label class="form-label">Credit Account</label>
+          <select class="form-input" id="daily-credit">
+            <option value="">Select...</option>
+          </select>
+        </div>
+      </div>
+
+      <button class="btn-primary" onclick="saveDailyExpense()">Add Expense</button>
+      <div class="err-msg" id="err-daily">Please fill in all required fields.</div>
+    </div>
+
+    <!-- Expenses List -->
+    <div class="section-label" style="margin-top:32px">Your Daily Expenses</div>
+    <div id="daily-list"></div>
+
+    <button class="btn-back" onclick="goTo('home-screen')">← Back to Home</button>
+  </div>
 </div>
 
 <!-- ════════════════════════════
@@ -1001,6 +1233,272 @@ if ('serviceWorker' in navigator) {
   window.addEventListener('load', () =>
     navigator.serviceWorker.register('sw.js').catch(() => {}));
 }
+
+// ═══════════════════════════════════════════════════
+// DAILY TRACKER FUNCTIONS
+// ═══════════════════════════════════════════════════
+
+// Populate account dropdowns
+function populateDailyAccounts() {
+  const accounts = S.get('et_accounts') || [];
+  const debitEl  = document.getElementById('daily-debit');
+  const creditEl = document.getElementById('daily-credit');
+  
+  const options = accounts.map(a => `<option value="${a}">${a}</option>`).join('');
+  debitEl.innerHTML  = '<option value="">Select...</option>' + options;
+  creditEl.innerHTML = '<option value="">Select...</option>' + options;
+}
+
+// Load daily expenses when screen opens
+function loadDailyExpenses() {
+  populateDailyAccounts();
+  
+  const session = S.get('et_session');
+  if (!session) return;
+  
+  const expenses = S.get(`et_daily_${session}`) || [];
+  const listEl   = document.getElementById('daily-list');
+  
+  if (expenses.length === 0) {
+    listEl.innerHTML = `
+      <div class="empty-state">
+        <svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+          <line x1="16" y1="2" x2="16" y2="6"/>
+          <line x1="8" y1="2" x2="8" y2="6"/>
+          <line x1="3" y1="10" x2="21" y2="10"/>
+        </svg>
+        <div class="empty-state-text">No expenses recorded yet.<br>Add your first expense above!</div>
+      </div>`;
+    return;
+  }
+  
+  // Sort by date descending (newest first)
+  expenses.sort((a,b) => new Date(b.date) - new Date(a.date));
+  
+  listEl.innerHTML = expenses.map((exp, idx) => {
+    const date = new Date(exp.date);
+    const dateStr = date.toLocaleDateString('en-MY', { 
+      day: 'numeric', month: 'short', year: 'numeric' 
+    });
+    
+    return `
+      <div class="expense-item">
+        <div class="expense-item-header">
+          <div>
+            <div class="expense-item-detail">${exp.detail}</div>
+            <span class="expense-item-category">${exp.category}</span>
+          </div>
+          <div class="expense-item-amount">
+            ${parseFloat(exp.amount).toFixed(2)}
+            <span class="expense-item-currency">${exp.currency}</span>
+          </div>
+        </div>
+        <div class="expense-item-meta">
+          <div class="expense-meta-item">
+            <span class="expense-meta-label">Date:</span>
+            <span class="expense-meta-value">${dateStr}</span>
+          </div>
+          <div class="expense-meta-item">
+            <span class="expense-meta-label">No:</span>
+            <span class="expense-meta-value">${exp.no}</span>
+          </div>
+          <div class="expense-meta-item">
+            <span class="expense-meta-label">Debit:</span>
+            <span class="expense-meta-value">${exp.debit || '—'}</span>
+          </div>
+          <div class="expense-meta-item">
+            <span class="expense-meta-label">Credit:</span>
+            <span class="expense-meta-value">${exp.credit || '—'}</span>
+          </div>
+        </div>
+        <div class="expense-actions">
+          <button class="btn-edit" onclick="editDailyExpense(${idx})">
+            <svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+            Edit
+          </button>
+          <button class="btn-delete" onclick="deleteDailyExpense(${idx})">
+            <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+            Delete
+          </button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// Save new daily expense
+function saveDailyExpense() {
+  const detail   = document.getElementById('daily-detail').value.trim();
+  const category = document.getElementById('daily-category').value;
+  const currency = document.getElementById('daily-currency').value;
+  const amount   = document.getElementById('daily-amount').value;
+  const debit    = document.getElementById('daily-debit').value;
+  const credit   = document.getElementById('daily-credit').value;
+  const errEl    = document.getElementById('err-daily');
+  
+  // Validation
+  if (!detail || !category || !amount) {
+    errEl.textContent = 'Please fill in Transaction Detail, Category, and Amount.';
+    errEl.classList.add('show');
+    return;
+  }
+  
+  if (parseFloat(amount) <= 0) {
+    errEl.textContent = 'Amount must be greater than zero.';
+    errEl.classList.add('show');
+    return;
+  }
+  
+  errEl.classList.remove('show');
+  
+  const session  = S.get('et_session');
+  const expenses = S.get(`et_daily_${session}`) || [];
+  
+  const now   = new Date();
+  const month = now.toLocaleDateString('en-MY', { month: 'short', year: 'numeric' });
+  
+  const newExpense = {
+    no: expenses.length + 1,
+    date: now.toISOString(),
+    month: month,
+    detail: detail,
+    category: category,
+    currency: currency,
+    amount: parseFloat(amount).toFixed(2),
+    debit: debit,
+    credit: credit
+  };
+  
+  expenses.push(newExpense);
+  S.set(`et_daily_${session}`, expenses);
+  
+  // Clear form
+  document.getElementById('daily-detail').value   = '';
+  document.getElementById('daily-category').value = '';
+  document.getElementById('daily-amount').value   = '';
+  document.getElementById('daily-debit').value    = '';
+  document.getElementById('daily-credit').value   = '';
+  
+  // Reload list
+  loadDailyExpenses();
+  
+  // Scroll to top to see new expense
+  document.getElementById('daily-screen').scrollTop = 0;
+}
+
+// Edit expense
+let editingDailyIndex = null;
+
+function editDailyExpense(idx) {
+  const session  = S.get('et_session');
+  const expenses = S.get(`et_daily_${session}`) || [];
+  const exp      = expenses[idx];
+  
+  if (!exp) return;
+  
+  // Populate form with expense data
+  document.getElementById('daily-detail').value   = exp.detail;
+  document.getElementById('daily-category').value = exp.category;
+  document.getElementById('daily-currency').value = exp.currency;
+  document.getElementById('daily-amount').value   = exp.amount;
+  document.getElementById('daily-debit').value    = exp.debit || '';
+  document.getElementById('daily-credit').value   = exp.credit || '';
+  
+  // Track which expense is being edited
+  editingDailyIndex = idx;
+  
+  // Change button text
+  const btn = document.querySelector('#daily-screen .btn-primary');
+  btn.textContent = 'Update Expense';
+  btn.onclick = updateDailyExpense;
+  
+  // Scroll to top
+  document.getElementById('daily-screen').scrollTop = 0;
+}
+
+function updateDailyExpense() {
+  const detail   = document.getElementById('daily-detail').value.trim();
+  const category = document.getElementById('daily-category').value;
+  const currency = document.getElementById('daily-currency').value;
+  const amount   = document.getElementById('daily-amount').value;
+  const debit    = document.getElementById('daily-debit').value;
+  const credit   = document.getElementById('daily-credit').value;
+  const errEl    = document.getElementById('err-daily');
+  
+  if (!detail || !category || !amount) {
+    errEl.textContent = 'Please fill in Transaction Detail, Category, and Amount.';
+    errEl.classList.add('show');
+    return;
+  }
+  
+  if (parseFloat(amount) <= 0) {
+    errEl.textContent = 'Amount must be greater than zero.';
+    errEl.classList.add('show');
+    return;
+  }
+  
+  errEl.classList.remove('show');
+  
+  const session  = S.get('et_session');
+  const expenses = S.get(`et_daily_${session}`) || [];
+  
+  if (editingDailyIndex !== null && expenses[editingDailyIndex]) {
+    // Keep original date and number
+    expenses[editingDailyIndex].detail   = detail;
+    expenses[editingDailyIndex].category = category;
+    expenses[editingDailyIndex].currency = currency;
+    expenses[editingDailyIndex].amount   = parseFloat(amount).toFixed(2);
+    expenses[editingDailyIndex].debit    = debit;
+    expenses[editingDailyIndex].credit   = credit;
+    
+    S.set(`et_daily_${session}`, expenses);
+  }
+  
+  // Reset form
+  cancelDailyEdit();
+  loadDailyExpenses();
+}
+
+function cancelDailyEdit() {
+  editingDailyIndex = null;
+  
+  document.getElementById('daily-detail').value   = '';
+  document.getElementById('daily-category').value = '';
+  document.getElementById('daily-amount').value   = '';
+  document.getElementById('daily-debit').value    = '';
+  document.getElementById('daily-credit').value   = '';
+  
+  const btn = document.querySelector('#daily-screen .btn-primary');
+  btn.textContent = 'Add Expense';
+  btn.onclick = saveDailyExpense;
+}
+
+// Delete expense
+function deleteDailyExpense(idx) {
+  if (!confirm('Delete this expense? This cannot be undone.')) return;
+  
+  const session  = S.get('et_session');
+  const expenses = S.get(`et_daily_${session}`) || [];
+  
+  expenses.splice(idx, 1);
+  
+  // Renumber remaining expenses
+  expenses.forEach((exp, i) => exp.no = i + 1);
+  
+  S.set(`et_daily_${session}`, expenses);
+  loadDailyExpenses();
+}
+
+// Load expenses when navigating to daily screen
+const originalGoTo = goTo;
+goTo = function(id) {
+  originalGoTo(id);
+  if (id === 'daily-screen') {
+    cancelDailyEdit();
+    loadDailyExpenses();
+  }
+};
+
 </script>
 </body>
 </html>
