@@ -1,6 +1,6 @@
 {
-  "name": "Expense Tracker",
-  "short_name": "ExpenseTracker",
+  "name": "2Go Expense Tracker",
+  "short_name": "2GET",
   "description": "Family Expense Tracker — Daily and Holiday",
   "start_url": "index.html",
   "display": "standalone",

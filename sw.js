@@ -1,7 +1,7 @@
-// ExpenseTracker Service Worker
+// 2Go Expense Tracker Service Worker
 // Caches the app so it works offline on your iPhone
 
-const CACHE_NAME = 'expense-tracker-v1';
+const CACHE_NAME = '2go-expense-tracker-v1';
 const ASSETS = [
   'index.html',
   'manifest.json'
