@@ -1,0 +1,1006 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="ExpenseTracker">
+  <meta name="theme-color" content="#0f172a">
+  <link rel="manifest" href="manifest.json">
+  <title>Expense Tracker</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg:       #0f172a;
+      --bg-card:  #1e293b;
+      --accent:   #f59e0b;
+      --accent2:  #6366f1;
+      --text:     #f8fafc;
+      --text-2:   #94a3b8;
+      --text-3:   #64748b;
+      --border:   rgba(255,255,255,0.06);
+      --danger:   #ef4444;
+      --r:        16px;
+      --r-sm:     10px;
+    }
+
+    * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      min-height: -webkit-fill-available;
+      overflow-x: hidden;
+    }
+
+    /* ── Screen management ── */
+    .screen { display:none; min-height:100vh; min-height:-webkit-fill-available; }
+    .screen.active { display:flex; flex-direction:column; }
+
+    /* ═══════════════════════════
+       LOGIN SCREEN
+    ═══════════════════════════ */
+    #login-screen {
+      position: relative;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 24px;
+      overflow: hidden;
+    }
+
+    #login-screen::before {
+      content: '';
+      position: absolute;
+      top: -200px; right: -150px;
+      width: 500px; height: 500px;
+      background: radial-gradient(circle, rgba(245,158,11,0.12) 0%, transparent 70%);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+
+    #login-screen::after {
+      content: '';
+      position: absolute;
+      bottom: -200px; left: -150px;
+      width: 500px; height: 500px;
+      background: radial-gradient(circle, rgba(99,102,241,0.08) 0%, transparent 70%);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+
+    .login-container {
+      width: 100%;
+      max-width: 400px;
+      animation: fadeInUp 0.6s ease both;
+    }
+
+    .login-logo { text-align:center; margin-bottom:36px; }
+
+    .logo-icon {
+      width: 72px; height: 72px;
+      background: linear-gradient(135deg, var(--accent), #d97706);
+      border-radius: 20px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 18px;
+      box-shadow: 0 20px 60px rgba(245,158,11,0.3);
+    }
+
+    .logo-icon svg { width:36px; height:36px; fill:#0f172a; }
+
+    .login-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 32px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+
+    .login-sub {
+      font-size: 14px;
+      color: var(--text-2);
+      margin-top: 6px;
+    }
+
+    .login-card {
+      background: var(--bg-card);
+      border-radius: var(--r);
+      padding: 32px 28px;
+      border: 1px solid var(--border);
+      box-shadow: 0 32px 64px rgba(0,0,0,0.4);
+    }
+
+    .form-group { margin-bottom: 20px; }
+
+    .form-label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-2);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 8px;
+    }
+
+    .input-wrap { position: relative; }
+
+    .form-input {
+      width: 100%;
+      background: var(--bg);
+      border: 1.5px solid #334155;
+      border-radius: var(--r-sm);
+      padding: 14px 16px;
+      font-size: 16px;
+      font-family: 'DM Sans', sans-serif;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .form-input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(245,158,11,0.15);
+    }
+
+    .form-input::placeholder { color: var(--text-3); }
+
+    .pw-toggle {
+      position: absolute;
+      right: 14px; top: 50%;
+      transform: translateY(-50%);
+      background: none; border: none;
+      cursor: pointer;
+      color: var(--text-3);
+      display: flex; align-items: center;
+      padding: 4px;
+    }
+
+    .pw-input { padding-right: 48px; }
+
+    .btn-primary {
+      width: 100%;
+      background: linear-gradient(135deg, var(--accent), #d97706);
+      color: #0f172a;
+      border: none;
+      border-radius: var(--r-sm);
+      padding: 16px;
+      font-size: 16px;
+      font-weight: 600;
+      font-family: 'DM Sans', sans-serif;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: opacity 0.2s, transform 0.1s;
+      letter-spacing: 0.3px;
+    }
+
+    .btn-primary:active { transform: scale(0.98); opacity: 0.9; }
+
+    .err-msg {
+      background: rgba(239,68,68,0.1);
+      border: 1px solid rgba(239,68,68,0.3);
+      border-radius: var(--r-sm);
+      padding: 12px 16px;
+      font-size: 14px;
+      color: #fca5a5;
+      margin-top: 14px;
+      display: none;
+    }
+
+    .err-msg.show { display: block; animation: fadeInUp 0.3s ease; }
+
+    .admin-link {
+      text-align: center;
+      margin-top: 28px;
+    }
+
+    .admin-link button {
+      background: none; border: none;
+      font-size: 12px;
+      color: var(--text-3);
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      padding: 6px 10px;
+      border-radius: 6px;
+      transition: color 0.2s;
+    }
+
+    .admin-link button:hover { color: var(--text-2); }
+
+    /* ═══════════════════════════
+       HOME SCREEN
+    ═══════════════════════════ */
+    .top-bar {
+      background: var(--bg-card);
+      padding: 52px 24px 24px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .top-bar-label {
+      font-size: 12px;
+      color: var(--text-2);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 4px;
+    }
+
+    .top-bar-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 28px;
+      font-weight: 700;
+    }
+
+    .top-bar-sub {
+      font-size: 13px;
+      color: var(--text-3);
+      margin-top: 4px;
+    }
+
+    .screen-body { padding: 28px 24px; flex: 1; overflow-y: auto; }
+
+    .section-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-2);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 16px;
+    }
+
+    .tracker-cards { display: flex; flex-direction: column; gap: 14px; }
+
+    .tracker-card {
+      background: var(--bg-card);
+      border-radius: var(--r);
+      padding: 22px 20px;
+      border: 1px solid var(--border);
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s;
+      display: flex;
+      align-items: center;
+      gap: 18px;
+    }
+
+    .tracker-card:active { transform: scale(0.98); }
+    .tracker-card.daily  { border-left: 4px solid var(--accent); }
+    .tracker-card.holiday{ border-left: 4px solid var(--accent2); }
+
+    .tc-icon {
+      width: 50px; height: 50px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .tracker-card.daily   .tc-icon { background: rgba(245,158,11,0.15); }
+    .tracker-card.holiday .tc-icon { background: rgba(99,102,241,0.15); }
+    .tracker-card.daily   .tc-icon svg { fill: var(--accent); }
+    .tracker-card.holiday .tc-icon svg { fill: #818cf8; }
+    .tc-icon svg { width:24px; height:24px; }
+
+    .tc-info { flex:1; }
+
+    .tc-title { font-size:17px; font-weight:600; margin-bottom:3px; }
+    .tc-desc  { font-size:13px; color:var(--text-2); line-height:1.4; }
+
+    .tc-arrow { color: var(--text-3); flex-shrink:0; }
+
+    .action-row {
+      display: flex;
+      gap: 12px;
+      margin-top: 20px;
+    }
+
+    .btn-ghost {
+      flex: 1;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: var(--r-sm);
+      padding: 13px 10px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-2);
+      font-family: 'DM Sans', sans-serif;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      transition: background 0.2s;
+    }
+
+    .btn-ghost:active { background: rgba(255,255,255,0.08); }
+    .btn-ghost svg { width:15px; height:15px; fill:currentColor; }
+
+    /* ═══════════════════════════
+       PLACEHOLDER SCREENS
+    ═══════════════════════════ */
+    .placeholder-screen {
+      align-items: center;
+      justify-content: center;
+      padding: 48px 32px;
+      text-align: center;
+    }
+
+    .badge {
+      display: inline-block;
+      background: rgba(245,158,11,0.15);
+      color: var(--accent);
+      font-size: 11px;
+      font-weight: 600;
+      padding: 5px 14px;
+      border-radius: 100px;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 20px;
+    }
+
+    .placeholder-screen h2 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+
+    .placeholder-screen p {
+      font-size: 15px;
+      color: var(--text-2);
+      line-height: 1.65;
+      max-width: 300px;
+      margin: 0 auto;
+    }
+
+    .btn-back {
+      margin-top: 32px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.09);
+      border-radius: var(--r-sm);
+      padding: 14px 28px;
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .btn-back:active { background: rgba(255,255,255,0.09); }
+
+    /* ═══════════════════════════
+       ADMIN SCREEN
+    ═══════════════════════════ */
+    .admin-card {
+      background: var(--bg-card);
+      border-radius: var(--r);
+      border: 1px solid var(--border);
+      overflow: hidden;
+    }
+
+    .admin-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 15px 20px;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+
+    .admin-row:last-child { border-bottom: none; }
+
+    .admin-row-title { font-size:15px; font-weight:500; }
+    .admin-row-sub   { font-size:12px; color:var(--text-3); margin-top:2px; }
+
+    .btn-sm {
+      background: rgba(245,158,11,0.15);
+      color: var(--accent);
+      border: none;
+      border-radius: 8px;
+      padding: 7px 13px;
+      font-size:13px; font-weight:600;
+      font-family:'DM Sans',sans-serif;
+      cursor:pointer;
+    }
+
+    .btn-sm-danger {
+      background: rgba(239,68,68,0.1);
+      color: #fca5a5;
+      border: none;
+      border-radius: 8px;
+      padding: 7px 13px;
+      font-size:13px; font-weight:600;
+      font-family:'DM Sans',sans-serif;
+      cursor:pointer;
+      margin-left:8px;
+    }
+
+    .admin-section { margin-bottom:28px; }
+
+    .notice {
+      background: rgba(245,158,11,0.1);
+      border: 1px solid rgba(245,158,11,0.2);
+      border-radius: var(--r-sm);
+      padding: 13px 16px;
+      margin-bottom: 22px;
+      font-size: 14px;
+      color: #fcd34d;
+      line-height: 1.5;
+    }
+
+    /* ═══════════════════════════
+       MODALS
+    ═══════════════════════════ */
+    .overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.72);
+      display: none;
+      align-items: flex-end;
+      z-index: 200;
+    }
+
+    .overlay.show { display:flex; animation: fadeIn 0.2s ease; }
+
+    .modal {
+      background: var(--bg-card);
+      border-radius: 24px 24px 0 0;
+      padding: 28px 24px 44px;
+      width: 100%;
+      animation: slideUp 0.28s ease;
+    }
+
+    .modal-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 22px;
+    }
+
+    .modal-hint {
+      font-size: 14px;
+      color: var(--text-2);
+      margin-bottom: 20px;
+      line-height: 1.5;
+    }
+
+    .modal-btns { display:flex; gap:12px; margin-top:20px; }
+
+    .btn-cancel {
+      flex:1;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.09);
+      border-radius: var(--r-sm);
+      padding: 14px;
+      font-size:15px; font-weight:500;
+      color: var(--text-2);
+      font-family:'DM Sans',sans-serif;
+      cursor:pointer;
+    }
+
+    .btn-confirm {
+      flex:1;
+      background: linear-gradient(135deg, var(--accent), #d97706);
+      border: none;
+      border-radius: var(--r-sm);
+      padding: 14px;
+      font-size:15px; font-weight:600;
+      color: #0f172a;
+      font-family:'DM Sans',sans-serif;
+      cursor:pointer;
+    }
+
+    /* ═══════════════════════════
+       ANIMATIONS
+    ═══════════════════════════ */
+    @keyframes fadeInUp {
+      from { opacity:0; transform:translateY(20px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+
+    @keyframes fadeIn {
+      from { opacity:0; } to { opacity:1; }
+    }
+
+    @keyframes slideUp {
+      from { transform:translateY(40px); }
+      to   { transform:translateY(0); }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ════════════════════════════
+     SCREEN 1 — LOGIN
+════════════════════════════ -->
+<div id="login-screen" class="screen active">
+  <div class="login-container">
+
+    <div class="login-logo">
+      <div class="logo-icon">
+        <svg viewBox="0 0 24 24"><path d="M21 18v1c0 1.1-.9 2-2 2H5c-1.11 0-2-.9-2-2V5c0-1.1.89-2 2-2h14c1.1 0 2 .9 2 2v1h-9c-1.11 0-2 .9-2 2v8c0 1.1.89 2 2 2h9zm-9-2h10V8H12v8zm4-2.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>
+      </div>
+      <div class="login-title">ExpenseTracker</div>
+      <div class="login-sub">Family Finance Manager</div>
+    </div>
+
+    <div class="login-card">
+      <div class="form-group">
+        <label class="form-label" for="login-user">Username</label>
+        <input class="form-input" type="text" id="login-user"
+               placeholder="Enter your username"
+               autocapitalize="none" autocorrect="off" autocomplete="username">
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="login-pw">Password</label>
+        <div class="input-wrap">
+          <input class="form-input pw-input" type="password" id="login-pw"
+                 placeholder="Enter your password" autocomplete="current-password">
+          <button class="pw-toggle" onclick="togglePw()" type="button" aria-label="Show/hide password">
+            <svg id="eye-icon" width="20" height="20" viewBox="0 0 24 24"
+                 fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <button class="btn-primary" onclick="doLogin()">Sign In</button>
+      <div class="err-msg" id="login-err">Incorrect username or password.</div>
+    </div>
+
+    <div class="admin-link">
+      <button onclick="openAdminGate()">⚙ Admin Setup</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ════════════════════════════
+     SCREEN 2 — HOME
+════════════════════════════ -->
+<div id="home-screen" class="screen">
+  <div class="top-bar">
+    <div class="top-bar-label">Welcome back</div>
+    <div class="top-bar-title" id="home-name">—</div>
+    <div class="top-bar-sub"  id="home-date">—</div>
+  </div>
+
+  <div class="screen-body">
+    <div class="section-label">Choose Tracker</div>
+
+    <div class="tracker-cards">
+      <div class="tracker-card daily" onclick="goTo('daily-screen')">
+        <div class="tc-icon">
+          <svg viewBox="0 0 24 24"><path d="M19 3h-1V1h-2v2H8V1H6v2H5C3.89 3 3 3.9 3 5L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/></svg>
+        </div>
+        <div class="tc-info">
+          <div class="tc-title">Daily Tracker</div>
+          <div class="tc-desc">Groceries, transport, utilities &amp; more</div>
+        </div>
+        <div class="tc-arrow">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+        </div>
+      </div>
+
+      <div class="tracker-card holiday" onclick="goTo('holiday-screen')">
+        <div class="tc-icon">
+          <svg viewBox="0 0 24 24"><path d="M13.5 3.5c0 1.04-.82 1.88-1.85 1.98L12 5.5c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2zm-6.9 14.7l1-4.3L9 15v3h2v-4.97l-2.68-1.3.88-3.73C9.95 9 11.05 9.5 12 9.5c.95 0 2.07-.5 2.8-1.5l.88 3.73L13 13v5h2v-3l1.4-1.1 1 4.3 1.94-.52-1.4-5.97C17.56 11 17 9.68 16 9l-2.31-1.5c-.37-.24-.76-.37-1.13-.43L12 7c-.72 0-1.43.28-1.97.78L8.08 9c-1.03.68-1.59 2-1.94 3.2L4.74 18.2l1.86.5z"/></svg>
+        </div>
+        <div class="tc-info">
+          <div class="tc-title">Holiday Tracker</div>
+          <div class="tc-desc">Hotels, flights, attractions &amp; travel costs</div>
+        </div>
+        <div class="tc-arrow">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+        </div>
+      </div>
+    </div>
+
+    <div class="action-row">
+      <button class="btn-ghost" onclick="goTo('export-screen')">
+        <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+        Export / Sync
+      </button>
+      <button class="btn-ghost" onclick="doLogout()">
+        <svg viewBox="0 0 24 24"><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/></svg>
+        Sign Out
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════
+     SCREEN 3 — DAILY TRACKER (placeholder)
+════════════════════════════ -->
+<div id="daily-screen" class="screen placeholder-screen">
+  <div class="badge">Phase 4 — Coming Next</div>
+  <h2>Daily Tracker</h2>
+  <p>This screen will let you record daily expenses with all your fields — Transaction Detail, Category, Currency, Amount, Debit &amp; Credit Account.</p>
+  <button class="btn-back" onclick="goTo('home-screen')">← Back to Home</button>
+</div>
+
+<!-- ════════════════════════════
+     SCREEN 4 — HOLIDAY TRACKER (placeholder)
+════════════════════════════ -->
+<div id="holiday-screen" class="screen placeholder-screen">
+  <div class="badge">Phase 5 — Coming Next</div>
+  <h2>Holiday Tracker</h2>
+  <p>This screen will let you record holiday expenses with Trip Name and all travel-specific expense fields.</p>
+  <button class="btn-back" onclick="goTo('home-screen')">← Back to Home</button>
+</div>
+
+<!-- ════════════════════════════
+     SCREEN 5 — EXPORT (placeholder)
+════════════════════════════ -->
+<div id="export-screen" class="screen placeholder-screen">
+  <div class="badge">Phase 7 — Coming Next</div>
+  <h2>Export &amp; Sync</h2>
+  <p>This screen will let you export your data as a CSV file and sync it with OneDrive for automatic transfer to your Excel desktop app.</p>
+  <button class="btn-back" onclick="goTo('home-screen')">← Back to Home</button>
+</div>
+
+<!-- ════════════════════════════
+     SCREEN 6 — ADMIN
+════════════════════════════ -->
+<div id="admin-screen" class="screen">
+  <div class="top-bar">
+    <div class="top-bar-label">Administration</div>
+    <div class="top-bar-title">Admin Setup</div>
+    <div class="top-bar-sub">Manage users and accounts</div>
+  </div>
+
+  <div class="screen-body">
+    <div id="admin-notice" class="notice" style="display:none">
+      👋 First time setup — please add at least one user to get started.
+    </div>
+
+    <!-- Users -->
+    <div class="admin-section">
+      <div class="section-label">Users</div>
+      <div class="admin-card" id="users-list"></div>
+      <button class="btn-ghost" style="width:100%; margin-top:12px" onclick="openAddUser()">
+        <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+        Add User
+      </button>
+    </div>
+
+    <!-- Accounts -->
+    <div class="admin-section">
+      <div class="section-label">Accounts (Debit &amp; Credit)</div>
+      <div class="admin-card" id="accounts-list"></div>
+      <button class="btn-ghost" style="width:100%; margin-top:12px" onclick="openAddAccount()">
+        <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+        Add Account
+      </button>
+    </div>
+
+    <button class="btn-back" onclick="goTo('login-screen')">← Back to Login</button>
+  </div>
+</div>
+
+<!-- ════════════════════════════
+     MODALS
+════════════════════════════ -->
+
+<!-- Admin gate (enter master password) -->
+<div class="overlay" id="modal-admin-gate">
+  <div class="modal">
+    <div class="modal-title">Admin Access</div>
+    <div class="form-group">
+      <label class="form-label">Master Password</label>
+      <input class="form-input" type="password" id="input-master" placeholder="Enter master password">
+    </div>
+    <div class="err-msg" id="err-admin-gate">Incorrect master password.</div>
+    <div class="modal-btns">
+      <button class="btn-cancel"  onclick="closeModal('modal-admin-gate')">Cancel</button>
+      <button class="btn-confirm" onclick="verifyMaster()">Enter</button>
+    </div>
+  </div>
+</div>
+
+<!-- Set master password (first time) -->
+<div class="overlay" id="modal-set-master">
+  <div class="modal">
+    <div class="modal-title">Create Master Password</div>
+    <p class="modal-hint">This is your admin password. Store it safely — it controls all user accounts.</p>
+    <div class="form-group">
+      <label class="form-label">New Master Password</label>
+      <input class="form-input" type="password" id="input-new-master" placeholder="Choose a strong password">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Confirm Password</label>
+      <input class="form-input" type="password" id="input-confirm-master" placeholder="Repeat password">
+    </div>
+    <div class="err-msg" id="err-set-master">Passwords do not match.</div>
+    <div class="modal-btns">
+      <button class="btn-cancel"  onclick="closeModal('modal-set-master')">Cancel</button>
+      <button class="btn-confirm" onclick="saveMaster()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add user -->
+<div class="overlay" id="modal-add-user">
+  <div class="modal">
+    <div class="modal-title">Add User</div>
+    <div class="form-group">
+      <label class="form-label">Full Name</label>
+      <input class="form-input" type="text" id="input-uname" placeholder="e.g. Ahmad">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Username (for login)</label>
+      <input class="form-input" type="text" id="input-ulogin"
+             placeholder="e.g. ahmad" autocapitalize="none">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Password</label>
+      <input class="form-input" type="password" id="input-upw" placeholder="Choose a password">
+    </div>
+    <div class="err-msg" id="err-add-user">Please fill in all fields.</div>
+    <div class="modal-btns">
+      <button class="btn-cancel"  onclick="closeModal('modal-add-user')">Cancel</button>
+      <button class="btn-confirm" onclick="saveUser()">Add User</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add account -->
+<div class="overlay" id="modal-add-account">
+  <div class="modal">
+    <div class="modal-title">Add Account</div>
+    <div class="form-group">
+      <label class="form-label">Account Name</label>
+      <input class="form-input" type="text" id="input-acct"
+             placeholder="e.g. Maybank Savings">
+    </div>
+    <div class="err-msg" id="err-add-acct">Please enter an account name.</div>
+    <div class="modal-btns">
+      <button class="btn-cancel"  onclick="closeModal('modal-add-account')">Cancel</button>
+      <button class="btn-confirm" onclick="saveAccount()">Add Account</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════
+     JAVASCRIPT
+════════════════════════════ -->
+<script>
+// ── Storage helpers ──────────────────────────────
+const S = {
+  get: k => { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } },
+  set: (k,v) => localStorage.setItem(k, JSON.stringify(v))
+};
+
+// ── Password hashing (SHA-256 via WebCrypto) ─────
+async function hashPw(pw) {
+  const buf = await crypto.subtle.digest(
+    'SHA-256',
+    new TextEncoder().encode(pw + 'ET_FAMILY_2026')
+  );
+  return Array.from(new Uint8Array(buf))
+              .map(b => b.toString(16).padStart(2,'0'))
+              .join('');
+}
+
+// ── Navigation ───────────────────────────────────
+function goTo(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('show');
+}
+
+// ── Login ────────────────────────────────────────
+function togglePw() {
+  const el = document.getElementById('login-pw');
+  el.type = el.type === 'password' ? 'text' : 'password';
+}
+
+async function doLogin() {
+  const username = document.getElementById('login-user').value.trim().toLowerCase();
+  const password = document.getElementById('login-pw').value;
+  const errEl    = document.getElementById('login-err');
+
+  if (!username || !password) {
+    errEl.textContent = 'Please enter your username and password.';
+    errEl.classList.add('show');
+    return;
+  }
+
+  const users  = S.get('et_users') || [];
+  const hashed = await hashPw(password);
+  const user   = users.find(u => u.username === username && u.hash === hashed);
+
+  if (user) {
+    errEl.classList.remove('show');
+    document.getElementById('login-user').value = '';
+    document.getElementById('login-pw').value   = '';
+    S.set('et_session', user.username);
+
+    // Populate home screen
+    document.getElementById('home-name').textContent = user.name || user.username;
+    document.getElementById('home-date').textContent =
+      new Date().toLocaleDateString('en-MY',
+        { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+
+    goTo('home-screen');
+  } else {
+    errEl.textContent = 'Incorrect username or password. Please try again.';
+    errEl.classList.add('show');
+  }
+}
+
+function doLogout() {
+  S.set('et_session', null);
+  goTo('login-screen');
+}
+
+// Allow Enter key on login form
+document.getElementById('login-pw').addEventListener('keydown', e => {
+  if (e.key === 'Enter') doLogin();
+});
+document.getElementById('login-user').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('login-pw').focus();
+});
+
+// ── Admin gate ───────────────────────────────────
+function openAdminGate() {
+  if (!S.get('et_master')) {
+    // First time — create master password
+    document.getElementById('input-new-master').value    = '';
+    document.getElementById('input-confirm-master').value = '';
+    document.getElementById('err-set-master').classList.remove('show');
+    document.getElementById('modal-set-master').classList.add('show');
+  } else {
+    document.getElementById('input-master').value = '';
+    document.getElementById('err-admin-gate').classList.remove('show');
+    document.getElementById('modal-admin-gate').classList.add('show');
+  }
+}
+
+async function verifyMaster() {
+  const input  = document.getElementById('input-master').value;
+  const stored = S.get('et_master');
+  const hashed = await hashPw(input);
+  if (hashed === stored) {
+    closeModal('modal-admin-gate');
+    refreshAdmin();
+    goTo('admin-screen');
+  } else {
+    document.getElementById('err-admin-gate').classList.add('show');
+  }
+}
+
+async function saveMaster() {
+  const pw1 = document.getElementById('input-new-master').value;
+  const pw2 = document.getElementById('input-confirm-master').value;
+  const err = document.getElementById('err-set-master');
+  if (!pw1 || pw1.length < 4) {
+    err.textContent = 'Password must be at least 4 characters.';
+    err.classList.add('show'); return;
+  }
+  if (pw1 !== pw2) {
+    err.textContent = 'Passwords do not match.';
+    err.classList.add('show'); return;
+  }
+  S.set('et_master', await hashPw(pw1));
+  err.classList.remove('show');
+  closeModal('modal-set-master');
+  refreshAdmin();
+  goTo('admin-screen');
+}
+
+// ── Admin screen ─────────────────────────────────
+function refreshAdmin() {
+  const users    = S.get('et_users')    || [];
+  const accounts = S.get('et_accounts') || [];
+
+  document.getElementById('admin-notice').style.display =
+    users.length === 0 ? 'block' : 'none';
+
+  // Users list
+  const uEl = document.getElementById('users-list');
+  uEl.innerHTML = users.length === 0
+    ? '<div class="admin-row"><div class="admin-row-sub" style="color:var(--text-3)">No users yet.</div></div>'
+    : users.map((u,i) => `
+        <div class="admin-row">
+          <div>
+            <div class="admin-row-title">${u.name}</div>
+            <div class="admin-row-sub">@${u.username}</div>
+          </div>
+          <button class="btn-sm-danger" onclick="removeUser(${i})">Remove</button>
+        </div>`).join('');
+
+  // Accounts list
+  const aEl = document.getElementById('accounts-list');
+  aEl.innerHTML = accounts.length === 0
+    ? '<div class="admin-row"><div class="admin-row-sub" style="color:var(--text-3)">No accounts yet.</div></div>'
+    : accounts.map((a,i) => `
+        <div class="admin-row">
+          <div class="admin-row-title">${a}</div>
+          <button class="btn-sm-danger" onclick="removeAccount(${i})">Remove</button>
+        </div>`).join('');
+}
+
+// ── Users ─────────────────────────────────────────
+function openAddUser() {
+  ['input-uname','input-ulogin','input-upw'].forEach(id =>
+    document.getElementById(id).value = '');
+  document.getElementById('err-add-user').classList.remove('show');
+  document.getElementById('modal-add-user').classList.add('show');
+}
+
+async function saveUser() {
+  const name     = document.getElementById('input-uname').value.trim();
+  const username = document.getElementById('input-ulogin').value.trim().toLowerCase();
+  const pw       = document.getElementById('input-upw').value;
+  const err      = document.getElementById('err-add-user');
+
+  if (!name || !username || !pw) {
+    err.textContent = 'Please fill in all fields.';
+    err.classList.add('show'); return;
+  }
+  if (pw.length < 4) {
+    err.textContent = 'Password must be at least 4 characters.';
+    err.classList.add('show'); return;
+  }
+
+  const users = S.get('et_users') || [];
+  if (users.find(u => u.username === username)) {
+    err.textContent = 'That username is already taken. Choose another.';
+    err.classList.add('show'); return;
+  }
+
+  users.push({ name, username, hash: await hashPw(pw) });
+  S.set('et_users', users);
+  closeModal('modal-add-user');
+  refreshAdmin();
+}
+
+function removeUser(i) {
+  const users = S.get('et_users') || [];
+  users.splice(i,1);
+  S.set('et_users', users);
+  refreshAdmin();
+}
+
+// ── Accounts ──────────────────────────────────────
+function openAddAccount() {
+  document.getElementById('input-acct').value = '';
+  document.getElementById('err-add-acct').classList.remove('show');
+  document.getElementById('modal-add-account').classList.add('show');
+}
+
+function saveAccount() {
+  const name = document.getElementById('input-acct').value.trim();
+  const err  = document.getElementById('err-add-acct');
+  if (!name) { err.classList.add('show'); return; }
+  const accounts = S.get('et_accounts') || [];
+  accounts.push(name);
+  S.set('et_accounts', accounts);
+  closeModal('modal-add-account');
+  refreshAdmin();
+}
+
+function removeAccount(i) {
+  const accounts = S.get('et_accounts') || [];
+  accounts.splice(i,1);
+  S.set('et_accounts', accounts);
+  refreshAdmin();
+}
+
+// ── PWA service worker ─────────────────────────────
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () =>
+    navigator.serviceWorker.register('sw.js').catch(() => {}));
+}
+</script>
+</body>
+</html>
