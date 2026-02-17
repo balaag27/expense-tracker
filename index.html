@@ -1474,11 +1474,11 @@ function loadDailyExpenses() {
           </div>
         </div>
         <div class="expense-actions">
-          <button class="btn-edit" onclick="editDailyExpense(${idx})">
+          <button class="btn-edit" onclick="editDailyExpense('${exp.id}')">
             <svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
             Edit
           </button>
-          <button class="btn-delete" onclick="deleteDailyExpense(${idx})">
+          <button class="btn-delete" onclick="deleteDailyExpense('${exp.id}')">
             <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
             Delete
           </button>
@@ -1510,6 +1510,14 @@ function saveDailyExpense() {
     return;
   }
   
+  // Check if same account on both sides - must check BEFORE disabled state matters
+  if (debit && debit.trim() !== '' && credit && credit.trim() !== '' && debit.trim() === credit.trim()) {
+    errEl.textContent = 'Received Into and Paid From cannot be the same account.';
+    errEl.classList.add('show');
+    alert('DEBUG: Same account detected! Debit=' + debit + ' Credit=' + credit);
+    return;
+  }
+  
   if (parseFloat(amount) <= 0) {
     errEl.textContent = 'Amount must be greater than zero.';
     errEl.classList.add('show');
@@ -1525,6 +1533,7 @@ function saveDailyExpense() {
   const month = now.toLocaleDateString('en-MY', { month: 'short', year: 'numeric' });
   
   const newExpense = {
+    id: Date.now() + '_' + Math.random().toString(36).substr(2, 9),
     no: expenses.length + 1,
     date: now.toISOString(),
     month: month,
@@ -1554,12 +1563,12 @@ function saveDailyExpense() {
 }
 
 // Edit expense
-let editingDailyIndex = null;
+let editingDailyId = null;
 
-function editDailyExpense(idx) {
+function editDailyExpense(id) {
   const session  = S.get('et_session');
   const expenses = S.get(`et_daily_${session}`) || [];
-  const exp      = expenses[idx];
+  const exp      = expenses.find(e => e.id === id);
   
   if (!exp) return;
   
@@ -1571,8 +1580,11 @@ function editDailyExpense(idx) {
   document.getElementById('daily-debit').value    = exp.debit || '';
   document.getElementById('daily-credit').value   = exp.credit || '';
   
+  // Trigger category change to set correct field state
+  handleCategoryChange('daily');
+  
   // Track which expense is being edited
-  editingDailyIndex = idx;
+  editingDailyId = id;
   
   // Change button text
   const btn = document.querySelector('#daily-screen .btn-primary');
@@ -1598,6 +1610,20 @@ function updateDailyExpense() {
     return;
   }
   
+  if (!credit) {
+    errEl.textContent = 'Please select a "Paid From" account.';
+    errEl.classList.add('show');
+    return;
+  }
+  
+  // Check if same account on both sides
+  if (debit && debit.trim() !== '' && credit && credit.trim() !== '' && debit.trim() === credit.trim()) {
+    errEl.textContent = 'Received Into and Paid From cannot be the same account.';
+    errEl.classList.add('show');
+    alert('DEBUG UPDATE: Same account detected! Debit=' + debit + ' Credit=' + credit);
+    return;
+  }
+  
   if (parseFloat(amount) <= 0) {
     errEl.textContent = 'Amount must be greater than zero.';
     errEl.classList.add('show');
@@ -1609,16 +1635,19 @@ function updateDailyExpense() {
   const session  = S.get('et_session');
   const expenses = S.get(`et_daily_${session}`) || [];
   
-  if (editingDailyIndex !== null && expenses[editingDailyIndex]) {
-    // Keep original date and number
-    expenses[editingDailyIndex].detail   = detail;
-    expenses[editingDailyIndex].category = category;
-    expenses[editingDailyIndex].currency = currency;
-    expenses[editingDailyIndex].amount   = parseFloat(amount).toFixed(2);
-    expenses[editingDailyIndex].debit    = debit;
-    expenses[editingDailyIndex].credit   = credit;
-    
-    S.set(`et_daily_${session}`, expenses);
+  if (editingDailyId) {
+    const expIndex = expenses.findIndex(e => e.id === editingDailyId);
+    if (expIndex !== -1) {
+      // Keep original date, number, and ID
+      expenses[expIndex].detail   = detail;
+      expenses[expIndex].category = category;
+      expenses[expIndex].currency = currency;
+      expenses[expIndex].amount   = parseFloat(amount).toFixed(2);
+      expenses[expIndex].debit    = debit;
+      expenses[expIndex].credit   = credit;
+      
+      S.set(`et_daily_${session}`, expenses);
+    }
   }
   
   // Reset form
@@ -1627,7 +1656,7 @@ function updateDailyExpense() {
 }
 
 function cancelDailyEdit() {
-  editingDailyIndex = null;
+  editingDailyId = null;
   
   document.getElementById('daily-detail').value   = '';
   document.getElementById('daily-category').value = '';
@@ -1644,19 +1673,22 @@ function cancelDailyEdit() {
 }
 
 // Delete expense
-function deleteDailyExpense(idx) {
+function deleteDailyExpense(id) {
   if (!confirm('Delete this expense? This cannot be undone.')) return;
   
   const session  = S.get('et_session');
   const expenses = S.get(`et_daily_${session}`) || [];
   
-  expenses.splice(idx, 1);
-  
-  // Renumber remaining expenses
-  expenses.forEach((exp, i) => exp.no = i + 1);
-  
-  S.set(`et_daily_${session}`, expenses);
-  loadDailyExpenses();
+  const expIndex = expenses.findIndex(e => e.id === id);
+  if (expIndex !== -1) {
+    expenses.splice(expIndex, 1);
+    
+    // Renumber remaining expenses
+    expenses.forEach((exp, i) => exp.no = i + 1);
+    
+    S.set(`et_daily_${session}`, expenses);
+    loadDailyExpenses();
+  }
 }
 
 // Load expenses when navigating to daily screen
@@ -1779,12 +1811,6 @@ function loadHolidayExpenses() {
   expenses.sort((a,b) => new Date(b.date) - new Date(a.date));
   
   listEl.innerHTML = expenses.map((exp, idx) => {
-    // Need to find original index in full array for edit/delete
-    const allExpenses = S.get(`et_holiday_${session}`) || [];
-    const originalIdx = allExpenses.findIndex(e => 
-      e.date === exp.date && e.detail === exp.detail && e.amount === exp.amount
-    );
-    
     const date = new Date(exp.date);
     const dateStr = date.toLocaleDateString('en-MY', { 
       day: 'numeric', month: 'short', year: 'numeric' 
@@ -1825,11 +1851,11 @@ function loadHolidayExpenses() {
           </div>
         </div>
         <div class="expense-actions">
-          <button class="btn-edit" onclick="editHolidayExpense(${originalIdx})">
+          <button class="btn-edit" onclick="editHolidayExpense('${exp.id}')">
             <svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
             Edit
           </button>
-          <button class="btn-delete" onclick="deleteHolidayExpense(${originalIdx})">
+          <button class="btn-delete" onclick="deleteHolidayExpense('${exp.id}')">
             <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
             Delete
           </button>
@@ -1868,6 +1894,14 @@ function saveHolidayExpense() {
     return;
   }
   
+  // Check if same account on both sides
+  if (debit && debit.trim() !== '' && credit && credit.trim() !== '' && debit.trim() === credit.trim()) {
+    errEl.textContent = 'Received Into and Paid From cannot be the same account.';
+    errEl.classList.add('show');
+    alert('DEBUG: Same account detected! Debit=' + debit + ' Credit=' + credit);
+    return;
+  }
+  
   if (parseFloat(amount) <= 0) {
     errEl.textContent = 'Amount must be greater than zero.';
     errEl.classList.add('show');
@@ -1883,6 +1917,7 @@ function saveHolidayExpense() {
   const month = now.toLocaleDateString('en-MY', { month: 'short', year: 'numeric' });
   
   const newExpense = {
+    id: Date.now() + '_' + Math.random().toString(36).substr(2, 9),
     no: expenses.length + 1,
     trip: trip,
     date: now.toISOString(),
@@ -1914,12 +1949,12 @@ function saveHolidayExpense() {
 }
 
 // Edit holiday expense
-let editingHolidayIndex = null;
+let editingHolidayId = null;
 
-function editHolidayExpense(idx) {
+function editHolidayExpense(id) {
   const session  = S.get('et_session');
   const expenses = S.get(`et_holiday_${session}`) || [];
-  const exp      = expenses[idx];
+  const exp      = expenses.find(e => e.id === id);
   
   if (!exp) return;
   
@@ -1932,7 +1967,10 @@ function editHolidayExpense(idx) {
   document.getElementById('holiday-debit').value    = exp.debit || '';
   document.getElementById('holiday-credit').value   = exp.credit || '';
   
-  editingHolidayIndex = idx;
+  // Trigger category change to set correct field state
+  handleCategoryChange('holiday');
+  
+  editingHolidayId = id;
   
   // Change button
   const btn = document.querySelector('#holiday-screen .btn-primary');
@@ -1959,6 +1997,20 @@ function updateHolidayExpense() {
     return;
   }
   
+  if (!credit) {
+    errEl.textContent = 'Please select a "Paid From" account.';
+    errEl.classList.add('show');
+    return;
+  }
+  
+  // Check if same account on both sides
+  if (debit && debit.trim() !== '' && credit && credit.trim() !== '' && debit.trim() === credit.trim()) {
+    errEl.textContent = 'Received Into and Paid From cannot be the same account.';
+    errEl.classList.add('show');
+    alert('DEBUG HOLIDAY UPDATE: Same account detected! Debit=' + debit + ' Credit=' + credit);
+    return;
+  }
+  
   if (parseFloat(amount) <= 0) {
     errEl.textContent = 'Amount must be greater than zero.';
     errEl.classList.add('show');
@@ -1970,16 +2022,19 @@ function updateHolidayExpense() {
   const session  = S.get('et_session');
   const expenses = S.get(`et_holiday_${session}`) || [];
   
-  if (editingHolidayIndex !== null && expenses[editingHolidayIndex]) {
-    expenses[editingHolidayIndex].trip     = trip;
-    expenses[editingHolidayIndex].detail   = detail;
-    expenses[editingHolidayIndex].category = category;
-    expenses[editingHolidayIndex].currency = currency;
-    expenses[editingHolidayIndex].amount   = parseFloat(amount).toFixed(2);
-    expenses[editingHolidayIndex].debit    = debit;
-    expenses[editingHolidayIndex].credit   = credit;
-    
-    S.set(`et_holiday_${session}`, expenses);
+  if (editingHolidayId) {
+    const expIndex = expenses.findIndex(e => e.id === editingHolidayId);
+    if (expIndex !== -1) {
+      expenses[expIndex].trip     = trip;
+      expenses[expIndex].detail   = detail;
+      expenses[expIndex].category = category;
+      expenses[expIndex].currency = currency;
+      expenses[expIndex].amount   = parseFloat(amount).toFixed(2);
+      expenses[expIndex].debit    = debit;
+      expenses[expIndex].credit   = credit;
+      
+      S.set(`et_holiday_${session}`, expenses);
+    }
   }
   
   cancelHolidayEdit();
@@ -1987,7 +2042,7 @@ function updateHolidayExpense() {
 }
 
 function cancelHolidayEdit() {
-  editingHolidayIndex = null;
+  editingHolidayId = null;
   
   document.getElementById('holiday-trip').value     = '';
   document.getElementById('holiday-detail').value   = '';
@@ -2005,19 +2060,22 @@ function cancelHolidayEdit() {
 }
 
 // Delete holiday expense
-function deleteHolidayExpense(idx) {
+function deleteHolidayExpense(id) {
   if (!confirm('Delete this expense? This cannot be undone.')) return;
   
   const session  = S.get('et_session');
   const expenses = S.get(`et_holiday_${session}`) || [];
   
-  expenses.splice(idx, 1);
-  
-  // Renumber
-  expenses.forEach((exp, i) => exp.no = i + 1);
-  
-  S.set(`et_holiday_${session}`, expenses);
-  loadHolidayExpenses();
+  const expIndex = expenses.findIndex(e => e.id === id);
+  if (expIndex !== -1) {
+    expenses.splice(expIndex, 1);
+    
+    // Renumber
+    expenses.forEach((exp, i) => exp.no = i + 1);
+    
+    S.set(`et_holiday_${session}`, expenses);
+    loadHolidayExpenses();
+  }
 }
 
 
