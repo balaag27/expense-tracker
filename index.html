@@ -830,13 +830,13 @@
 
       <div class="form-row">
         <div class="form-group" style="flex:1">
-          <label class="form-label">Debit Account</label>
+          <label class="form-label">Received Into <span style="color:var(--text-3);font-weight:400">(optional)</span></label>
           <select class="form-input" id="daily-debit">
             <option value="">Select...</option>
           </select>
         </div>
         <div class="form-group" style="flex:1">
-          <label class="form-label">Credit Account</label>
+          <label class="form-label">Paid From <span style="color:#fca5a5">*</span></label>
           <select class="form-input" id="daily-credit">
             <option value="">Select...</option>
           </select>
@@ -924,13 +924,13 @@
 
       <div class="form-row">
         <div class="form-group" style="flex:1">
-          <label class="form-label">Debit Account</label>
+          <label class="form-label">Received Into <span style="color:var(--text-3);font-weight:400">(optional)</span></label>
           <select class="form-input" id="holiday-debit">
             <option value="">Select...</option>
           </select>
         </div>
         <div class="form-group" style="flex:1">
-          <label class="form-label">Credit Account</label>
+          <label class="form-label">Paid From <span style="color:#fca5a5">*</span></label>
           <select class="form-input" id="holiday-credit">
             <option value="">Select...</option>
           </select>
@@ -1413,12 +1413,12 @@ function loadDailyExpenses() {
             <span class="expense-meta-value">${exp.no}</span>
           </div>
           <div class="expense-meta-item">
-            <span class="expense-meta-label">Debit:</span>
-            <span class="expense-meta-value">${exp.debit || '—'}</span>
+            <span class="expense-meta-label">Paid From:</span>
+            <span class="expense-meta-value">${exp.credit || '—'}</span>
           </div>
           <div class="expense-meta-item">
-            <span class="expense-meta-label">Credit:</span>
-            <span class="expense-meta-value">${exp.credit || '—'}</span>
+            <span class="expense-meta-label">Received Into:</span>
+            <span class="expense-meta-value">${exp.debit || '—'}</span>
           </div>
         </div>
         <div class="expense-actions">
@@ -1448,6 +1448,12 @@ function saveDailyExpense() {
   // Validation
   if (!detail || !category || !amount) {
     errEl.textContent = 'Please fill in Transaction Detail, Category, and Amount.';
+    errEl.classList.add('show');
+    return;
+  }
+  
+  if (!credit) {
+    errEl.textContent = 'Please select a "Paid From" account.';
     errEl.classList.add('show');
     return;
   }
@@ -1755,12 +1761,12 @@ function loadHolidayExpenses() {
             <span class="expense-meta-value">${exp.no}</span>
           </div>
           <div class="expense-meta-item">
-            <span class="expense-meta-label">Debit:</span>
-            <span class="expense-meta-value">${exp.debit || '—'}</span>
+            <span class="expense-meta-label">Paid From:</span>
+            <span class="expense-meta-value">${exp.credit || '—'}</span>
           </div>
           <div class="expense-meta-item">
-            <span class="expense-meta-label">Credit:</span>
-            <span class="expense-meta-value">${exp.credit || '—'}</span>
+            <span class="expense-meta-label">Received Into:</span>
+            <span class="expense-meta-value">${exp.debit || '—'}</span>
           </div>
         </div>
         <div class="expense-actions">
@@ -1797,6 +1803,12 @@ function saveHolidayExpense() {
   
   if (!detail || !category || !amount) {
     errEl.textContent = 'Please fill in Transaction Detail, Category, and Amount.';
+    errEl.classList.add('show');
+    return;
+  }
+  
+  if (!credit) {
+    errEl.textContent = 'Please select a "Paid From" account.';
     errEl.classList.add('show');
     return;
   }
