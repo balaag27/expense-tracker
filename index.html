@@ -1514,7 +1514,6 @@ function saveDailyExpense() {
   if (debit && debit.trim() !== '' && credit && credit.trim() !== '' && debit.trim() === credit.trim()) {
     errEl.textContent = 'Received Into and Paid From cannot be the same account.';
     errEl.classList.add('show');
-    alert('DEBUG: Same account detected! Debit=' + debit + ' Credit=' + credit);
     return;
   }
   
@@ -1620,7 +1619,6 @@ function updateDailyExpense() {
   if (debit && debit.trim() !== '' && credit && credit.trim() !== '' && debit.trim() === credit.trim()) {
     errEl.textContent = 'Received Into and Paid From cannot be the same account.';
     errEl.classList.add('show');
-    alert('DEBUG UPDATE: Same account detected! Debit=' + debit + ' Credit=' + credit);
     return;
   }
   
@@ -1898,7 +1896,6 @@ function saveHolidayExpense() {
   if (debit && debit.trim() !== '' && credit && credit.trim() !== '' && debit.trim() === credit.trim()) {
     errEl.textContent = 'Received Into and Paid From cannot be the same account.';
     errEl.classList.add('show');
-    alert('DEBUG: Same account detected! Debit=' + debit + ' Credit=' + credit);
     return;
   }
   
@@ -2007,7 +2004,6 @@ function updateHolidayExpense() {
   if (debit && debit.trim() !== '' && credit && credit.trim() !== '' && debit.trim() === credit.trim()) {
     errEl.textContent = 'Received Into and Paid From cannot be the same account.';
     errEl.classList.add('show');
-    alert('DEBUG HOLIDAY UPDATE: Same account detected! Debit=' + debit + ' Credit=' + credit);
     return;
   }
   
