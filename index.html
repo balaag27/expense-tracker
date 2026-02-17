@@ -396,6 +396,24 @@
       cursor: pointer;
     }
 
+    .field-disabled {
+      opacity: 0.35;
+      pointer-events: none;
+    }
+
+    .field-disabled select,
+    .field-disabled input {
+      cursor: not-allowed;
+      background: rgba(255,255,255,0.02);
+    }
+
+    .field-hint {
+      font-size: 11px;
+      color: var(--text-3);
+      margin-top: 5px;
+      font-style: italic;
+    }
+
     .expense-item {
       background: var(--bg-card);
       border-radius: var(--r-sm);
@@ -795,7 +813,7 @@
       <div class="form-row">
         <div class="form-group" style="flex:1">
           <label class="form-label">Category</label>
-          <select class="form-input" id="daily-category">
+          <select class="form-input" id="daily-category" onchange="handleCategoryChange('daily')">
             <option value="">Select...</option>
             <option value="Transportation">Transportation</option>
             <option value="Grocery">Grocery</option>
@@ -829,11 +847,12 @@
       </div>
 
       <div class="form-row">
-        <div class="form-group" style="flex:1">
+        <div class="form-group" style="flex:1" id="daily-debit-wrap">
           <label class="form-label">Received Into <span style="color:var(--text-3);font-weight:400">(optional)</span></label>
           <select class="form-input" id="daily-debit">
             <option value="">Select...</option>
           </select>
+          <div class="field-hint" id="daily-debit-hint" style="display:none">Not applicable for this category</div>
         </div>
         <div class="form-group" style="flex:1">
           <label class="form-label">Paid From <span style="color:#fca5a5">*</span></label>
@@ -890,7 +909,7 @@
       <div class="form-row">
         <div class="form-group" style="flex:1">
           <label class="form-label">Category</label>
-          <select class="form-input" id="holiday-category">
+          <select class="form-input" id="holiday-category" onchange="handleCategoryChange('holiday')">
             <option value="">Select...</option>
             <option value="Transportation">Transportation</option>
             <option value="Food & Beverage">Food & Beverage</option>
@@ -923,11 +942,12 @@
       </div>
 
       <div class="form-row">
-        <div class="form-group" style="flex:1">
+        <div class="form-group" style="flex:1" id="holiday-debit-wrap">
           <label class="form-label">Received Into <span style="color:var(--text-3);font-weight:400">(optional)</span></label>
           <select class="form-input" id="holiday-debit">
             <option value="">Select...</option>
           </select>
+          <div class="field-hint" id="holiday-debit-hint" style="display:none">Not applicable for this category</div>
         </div>
         <div class="form-group" style="flex:1">
           <label class="form-label">Paid From <span style="color:#fca5a5">*</span></label>
@@ -1344,6 +1364,38 @@ if ('serviceWorker' in navigator) {
 }
 
 // ═══════════════════════════════════════════════════
+// CATEGORY-BASED FIELD DEACTIVATION
+// ═══════════════════════════════════════════════════
+
+// Categories where money only goes OUT — Received Into is not applicable
+const OUTGOING_CATEGORIES = [
+  'Transportation', 'Grocery', 'Food & Beverage', 'Shopping',
+  'Utilities', 'Healthcare', 'Entertainment',
+  'Accommodation', 'Attraction', 'Travel Insurance'
+];
+
+function handleCategoryChange(tracker) {
+  const categoryEl  = document.getElementById(`${tracker}-category`);
+  const debitWrap   = document.getElementById(`${tracker}-debit-wrap`);
+  const debitEl     = document.getElementById(`${tracker}-debit`);
+  const debitHint   = document.getElementById(`${tracker}-debit-hint`);
+  const selected    = categoryEl.value;
+
+  if (selected && OUTGOING_CATEGORIES.includes(selected)) {
+    // Deactivate Received Into
+    debitWrap.classList.add('field-disabled');
+    debitEl.value    = '';        // Clear any previous selection
+    debitEl.disabled = true;
+    debitHint.style.display = 'block';
+  } else {
+    // Activate Received Into
+    debitWrap.classList.remove('field-disabled');
+    debitEl.disabled = false;
+    debitHint.style.display = 'none';
+  }
+}
+
+// ═══════════════════════════════════════════════════
 // DAILY TRACKER FUNCTIONS
 // ═══════════════════════════════════════════════════
 
@@ -1582,6 +1634,9 @@ function cancelDailyEdit() {
   document.getElementById('daily-amount').value   = '';
   document.getElementById('daily-debit').value    = '';
   document.getElementById('daily-credit').value   = '';
+  
+  // Reset Received Into field state
+  handleCategoryChange('daily');
   
   const btn = document.querySelector('#daily-screen .btn-primary');
   btn.textContent = 'Add Expense';
@@ -1940,6 +1995,9 @@ function cancelHolidayEdit() {
   document.getElementById('holiday-amount').value   = '';
   document.getElementById('holiday-debit').value    = '';
   document.getElementById('holiday-credit').value   = '';
+  
+  // Reset Received Into field state
+  handleCategoryChange('holiday');
   
   const btn = document.querySelector('#holiday-screen .btn-primary');
   btn.textContent = 'Add Expense';
