@@ -414,6 +414,15 @@
       font-style: italic;
     }
 
+    code {
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+    }
+
+    ol, ul {
+      line-height: 1.7;
+    }
+
     .expense-item {
       background: var(--bg-card);
       border-radius: var(--r-sm);
@@ -977,13 +986,76 @@
 </div>
 
 <!-- ════════════════════════════
-     SCREEN 5 — EXPORT (placeholder)
+     SCREEN 5 — EXPORT & SYNC
 ════════════════════════════ -->
-<div id="export-screen" class="screen placeholder-screen">
-  <div class="badge">Phase 7 — Coming Next</div>
-  <h2>Export &amp; Sync</h2>
-  <p>This screen will let you export your data as a CSV file and sync it with OneDrive for automatic transfer to your Excel desktop app.</p>
-  <button class="btn-back" onclick="goTo('home-screen')">← Back to Home</button>
+<div id="export-screen" class="screen">
+  <div class="top-bar">
+    <div class="top-bar-label">Data Export</div>
+    <div class="top-bar-title">Export & Sync</div>
+    <div class="top-bar-sub">Download your data for Excel</div>
+  </div>
+
+  <div class="screen-body">
+    <div class="notice" style="display:block; margin-bottom:24px;">
+      📊 Export your expenses as CSV files that open directly in Excel. Save to OneDrive for automatic sync to your desktop.
+    </div>
+
+    <!-- Daily Tracker Export -->
+    <div class="admin-section">
+      <div class="section-label">Daily Tracker</div>
+      <div class="admin-card">
+        <div class="admin-row">
+          <div>
+            <div class="admin-row-title">Daily Expenses CSV</div>
+            <div class="admin-row-sub" id="daily-export-count">—</div>
+          </div>
+          <button class="btn-sm" onclick="exportDailyCSV()">Export CSV</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Holiday Tracker Export -->
+    <div class="admin-section">
+      <div class="section-label">Holiday Tracker</div>
+      <div class="admin-card">
+        <div class="admin-row">
+          <div>
+            <div class="admin-row-title">Holiday Expenses CSV</div>
+            <div class="admin-row-sub" id="holiday-export-count">—</div>
+          </div>
+          <button class="btn-sm" onclick="exportHolidayCSV()">Export CSV</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Instructions -->
+    <div class="admin-section">
+      <div class="section-label">How to Sync with OneDrive</div>
+      <div style="background:var(--bg-card); border-radius:var(--r); padding:20px; border:1px solid var(--border); font-size:14px; line-height:1.7; color:var(--text-2);">
+        <p style="margin:0 0 12px 0; font-weight:500; color:var(--text);">Setup (One-time only):</p>
+        <ol style="margin:0; padding-left:20px;">
+          <li style="margin-bottom:8px;">Install <strong style="color:var(--text)">OneDrive app</strong> on your iPhone (free from App Store)</li>
+          <li style="margin-bottom:8px;">Sign in with your Microsoft account</li>
+          <li style="margin-bottom:8px;">On your Windows PC, make sure OneDrive is running and signed in</li>
+          <li>Create folder: <code style="background:rgba(0,0,0,0.3); padding:2px 6px; border-radius:4px; color:var(--accent);">Documents\ExpenseTracker\</code></li>
+        </ol>
+        
+        <p style="margin:16px 0 12px 0; font-weight:500; color:var(--text);">Daily sync workflow:</p>
+        <ol style="margin:0; padding-left:20px;">
+          <li style="margin-bottom:8px;">Tap <strong style="color:var(--text)">Export CSV</strong> button above</li>
+          <li style="margin-bottom:8px;">When file downloads, tap <strong style="color:var(--text)">Share</strong> → <strong style="color:var(--text)">Save to Files</strong></li>
+          <li style="margin-bottom:8px;">Navigate to <strong style="color:var(--text)">OneDrive → Documents → ExpenseTracker</strong></li>
+          <li>Tap <strong style="color:var(--text)">Save</strong> — file auto-syncs to your PC</li>
+        </ol>
+
+        <p style="margin:16px 0 0 0; padding:12px; background:rgba(245,158,11,0.1); border-radius:8px; border-left:3px solid var(--accent); font-size:13px;">
+          💡 <strong style="color:var(--text)">Tip:</strong> Your Excel desktop app can auto-refresh data from the OneDrive folder. No manual import needed!
+        </p>
+      </div>
+    </div>
+
+    <button class="btn-back" onclick="goTo('home-screen')">← Back to Home</button>
+  </div>
 </div>
 
 <!-- ════════════════════════════
@@ -1701,7 +1773,151 @@ goTo = function(id) {
     cancelHolidayEdit();
     loadHolidayExpenses();
   }
+  if (id === 'export-screen') {
+    loadExportCounts();
+  }
 };
+
+// ═══════════════════════════════════════════════════
+// EXPORT & CSV FUNCTIONS
+// ═══════════════════════════════════════════════════
+
+// Update export counts when screen loads
+function loadExportCounts() {
+  const session = S.get('et_session');
+  if (!session) return;
+  
+  const dailyExpenses   = S.get(`et_daily_${session}`) || [];
+  const holidayExpenses = S.get(`et_holiday_${session}`) || [];
+  
+  document.getElementById('daily-export-count').textContent = 
+    `${dailyExpenses.length} expense${dailyExpenses.length !== 1 ? 's' : ''} ready to export`;
+  
+  document.getElementById('holiday-export-count').textContent = 
+    `${holidayExpenses.length} expense${holidayExpenses.length !== 1 ? 's' : ''} ready to export`;
+}
+
+// Helper: Escape CSV field (handle commas, quotes, newlines)
+function escapeCSV(field) {
+  if (field == null) return '';
+  const str = String(field);
+  if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+    return '"' + str.replace(/"/g, '""') + '"';
+  }
+  return str;
+}
+
+// Helper: Format date for Excel
+function formatDateForExcel(isoDate) {
+  const date = new Date(isoDate);
+  const day   = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year  = date.getFullYear();
+  return `${day}/${month}/${year}`;
+}
+
+// Helper: Trigger file download
+function downloadCSV(filename, csvContent) {
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  const url  = URL.createObjectURL(blob);
+  
+  link.setAttribute('href', url);
+  link.setAttribute('download', filename);
+  link.style.display = 'none';
+  
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  
+  URL.revokeObjectURL(url);
+}
+
+// Export Daily Tracker CSV
+function exportDailyCSV() {
+  const session  = S.get('et_session');
+  const expenses = S.get(`et_daily_${session}`) || [];
+  
+  if (expenses.length === 0) {
+    alert('No daily expenses to export.');
+    return;
+  }
+  
+  // CSV Header
+  const headers = [
+    'No', 'Date', 'Entry Month', 'Transaction Detail', 'Category', 
+    'Currency', 'Amount', 'Received Into', 'Paid From'
+  ];
+  
+  let csv = headers.join(',') + '\n';
+  
+  // CSV Rows
+  expenses.forEach(exp => {
+    const row = [
+      exp.no,
+      formatDateForExcel(exp.date),
+      escapeCSV(exp.month),
+      escapeCSV(exp.detail),
+      escapeCSV(exp.category),
+      exp.currency,
+      exp.amount,
+      escapeCSV(exp.debit || ''),
+      escapeCSV(exp.credit || '')
+    ];
+    csv += row.join(',') + '\n';
+  });
+  
+  // Generate filename with username and date
+  const username = S.get('et_session');
+  const today    = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+  const filename = `${username}_daily_${today}.csv`;
+  
+  downloadCSV(filename, csv);
+}
+
+// Export Holiday Tracker CSV
+function exportHolidayCSV() {
+  const session  = S.get('et_session');
+  const expenses = S.get(`et_holiday_${session}`) || [];
+  
+  if (expenses.length === 0) {
+    alert('No holiday expenses to export.');
+    return;
+  }
+  
+  // CSV Header (Trip Name is first column for holidays)
+  const headers = [
+    'Trip Name', 'No', 'Date', 'Entry Month', 'Transaction Detail', 'Category', 
+    'Currency', 'Amount', 'Received Into', 'Paid From'
+  ];
+  
+  let csv = headers.join(',') + '\n';
+  
+  // CSV Rows
+  expenses.forEach(exp => {
+    const row = [
+      escapeCSV(exp.trip),
+      exp.no,
+      formatDateForExcel(exp.date),
+      escapeCSV(exp.month),
+      escapeCSV(exp.detail),
+      escapeCSV(exp.category),
+      exp.currency,
+      exp.amount,
+      escapeCSV(exp.debit || ''),
+      escapeCSV(exp.credit || '')
+    ];
+    csv += row.join(',') + '\n';
+  });
+  
+  // Generate filename
+  const username = S.get('et_session');
+  const today    = new Date().toISOString().split('T')[0];
+  const filename = `${username}_holiday_${today}.csv`;
+  
+  downloadCSV(filename, csv);
+}
+
 
 // ═══════════════════════════════════════════════════
 // HOLIDAY TRACKER FUNCTIONS
