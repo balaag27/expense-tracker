@@ -1843,9 +1843,9 @@ function exportDailyCSV() {
     return;
   }
   
-  // CSV Header
+  // CSV Header - Category removed, Received Into and Paid From reordered
   const headers = [
-    'No', 'Date', 'Entry Month', 'Transaction Detail', 'Category', 
+    'No', 'Date', 'Entry Month', 'Transaction Detail', 
     'Currency', 'Amount', 'Received Into', 'Paid From'
   ];
   
@@ -1853,15 +1853,24 @@ function exportDailyCSV() {
   
   // CSV Rows
   expenses.forEach(exp => {
+    // Auto-fill Received Into with category name, unless category is "Others"
+    let receivedInto;
+    if (exp.category === 'Others') {
+      // For Others, use user's manual selection (or blank)
+      receivedInto = exp.debit || '';
+    } else {
+      // For all other categories, use category name as the debit account
+      receivedInto = exp.category;
+    }
+    
     const row = [
       exp.no,
       formatDateForExcel(exp.date),
       escapeCSV(exp.month),
       escapeCSV(exp.detail),
-      escapeCSV(exp.category),
       exp.currency,
       exp.amount,
-      escapeCSV(exp.debit || ''),
+      escapeCSV(receivedInto),
       escapeCSV(exp.credit || '')
     ];
     csv += row.join(',') + '\n';
@@ -1885,9 +1894,9 @@ function exportHolidayCSV() {
     return;
   }
   
-  // CSV Header (Trip Name is first column for holidays)
+  // CSV Header - Category removed, Received Into auto-filled
   const headers = [
-    'Trip Name', 'No', 'Date', 'Entry Month', 'Transaction Detail', 'Category', 
+    'Trip Name', 'No', 'Date', 'Entry Month', 'Transaction Detail', 
     'Currency', 'Amount', 'Received Into', 'Paid From'
   ];
   
@@ -1895,16 +1904,25 @@ function exportHolidayCSV() {
   
   // CSV Rows
   expenses.forEach(exp => {
+    // Auto-fill Received Into with category name, unless category is "Others"
+    let receivedInto;
+    if (exp.category === 'Others') {
+      // For Others, use user's manual selection (or blank)
+      receivedInto = exp.debit || '';
+    } else {
+      // For all other categories, use category name as the debit account
+      receivedInto = exp.category;
+    }
+    
     const row = [
       escapeCSV(exp.trip),
       exp.no,
       formatDateForExcel(exp.date),
       escapeCSV(exp.month),
       escapeCSV(exp.detail),
-      escapeCSV(exp.category),
       exp.currency,
       exp.amount,
-      escapeCSV(exp.debit || ''),
+      escapeCSV(receivedInto),
       escapeCSV(exp.credit || '')
     ];
     csv += row.join(',') + '\n';
